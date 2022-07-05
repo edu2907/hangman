@@ -1,19 +1,27 @@
 # frozen_string_literal: true
 
+require 'yaml'
 # Responsible for the logic of the game
 class Game
   attr_reader :wrong_letters, :guess
 
-  def initialize
-    @word_master = WordMaster.new
-    @word_guesser = WordGuesser.new(self)
-    @wrong_letters = []
-    @guess = Array.new(@word_master.word_length) { '_' }
+  def initialize(secret_word, lifes, wrong_letters, guess)
+    @word_master = WordMaster.new(secret_word)
+    @word_guesser = WordGuesser.new(self, lifes)
+    @wrong_letters = wrong_letters
+    @guess = guess.nil? ? Array.new(@word_master.word_length) { '_' } : guess
   end
 
   def run
     loop_rounds
     print_win_msg
+  end
+
+  def save_game
+    save_obj = create_save_obj
+    save_str = YAML.dump(save_obj)
+    store_in_file(save_str)
+    end_execution
   end
 
   private
@@ -70,12 +78,36 @@ class Game
       @word_master.reveal_secret_word
     end
   end
+
+  def create_save_obj
+    {
+      word: @word_master.word,
+      lifes: @word_guesser.lifes,
+      wrong_letters: @wrong_letters,
+      guess: @guess
+    }
+  end
+
+  def store_in_file(yaml)
+    Dir.mkdir('saves') unless Dir.exist?('saves')
+    file_number = Dir.glob('saves/*').length + 1
+
+    File.open("saves/savegame#{file_number}.yaml", 'w+') { |file| file.write yaml }
+  end
+
+  def end_execution
+    print 'Do you wanna close the game? (yes: type \'y\'/no: type ENTER): '
+    option = gets.chomp
+    exit if option == 'yes'
+  end
 end
 
 # The computer who chooses the word
 class WordMaster
-  def initialize
-    @word = pick_random_word
+  attr_reader :word
+
+  def initialize(previous_word = nil)
+    @word = pick_word(previous_word)
   end
 
   def word_length
@@ -96,6 +128,12 @@ class WordMaster
 
   private
 
+  def pick_word(word)
+    return word unless word.nil?
+
+    pick_random_word
+  end
+
   def pick_random_word
     chosen_word = nil
     begin
@@ -113,14 +151,17 @@ end
 class WordGuesser
   attr_accessor :lifes
 
-  def initialize(game)
-    @lifes = Array.new(6) { '♥' }
+  def initialize(game, lifes)
+    @lifes = lifes
     @game = game
   end
 
   def guess_letter
     letter = type_letter
-    check_letter(letter)
+    return check_letter(letter) unless letter == '!save'
+
+    @game.save_game
+    guess_letter
   end
 
   private
@@ -152,4 +193,60 @@ class WordGuesser
   end
 end
 
-Game.new.run
+# Loads a saved file or creates a new game
+class SaveHandler
+  def start_game
+    option = select_option
+    start_with_selected_option(option)
+  end
+
+  def select_option
+    puts "Hello player! Choose 'n' to start a new game or 's' to load a save game"
+    gets.chomp
+  end
+
+  private
+
+  def start_with_selected_option(option)
+    case option
+    when 'n'
+      puts 'Creating a new game...'
+      Game.new(nil, Array.new(6) { '♥' }, [], nil).run
+    when 's'
+      puts 'Loading save files...'
+      load_game
+    else
+      puts 'Invalid option! Try again'
+      SaveHandler.choose_option
+    end
+  end
+
+  def load_game
+    filename = choose_files
+    save = load_file(filename)
+    Game.new(save[:word], save[:lifes], save[:wrong_letters], save[:guess]).run
+  end
+
+  def choose_files
+    files_list = Dir.glob('saves/*')
+    return files_list[0] if files_list.length == 1
+
+    files_list.each_with_index { |filename, i| puts "#{i + 1} - #{filename}" }
+    puts 'Choose one of the files by their number'
+    file_i = gets.chomp.to_i - 1
+    return files_list[file_i] unless files_list[file_i].nil?
+
+    puts 'Invalid file number! Try again'
+    choose_files
+  end
+
+  def load_file(filename)
+    YAML.load File.open(filename, 'r').readlines.join
+  end
+end
+
+if !Dir.exist?('saves') || Dir.glob('saves/*').empty?
+  Game.new(nil, Array.new(6) { '♥' }, [], nil).run
+else
+  SaveHandler.new.start_game
+end
