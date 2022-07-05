@@ -8,7 +8,14 @@ class Game
   end
 
   def run
-    while true
+    loop_rounds
+    print_win_msg
+  end
+
+  private
+
+  def loop_rounds
+    until game_ended?
       print_board
       guess_letter = @word_guesser.type_letter
       if @word_master.correct_letter?(guess_letter)
@@ -19,8 +26,6 @@ class Game
       end
     end
   end
-
-  private
 
   def print_board
     puts <<~HEREDOC
@@ -38,6 +43,28 @@ class Game
   def insert_ltr_in_guess(ltr)
     index_list = @word_master.get_ltr_index(ltr)
     index_list.each { |i| @guess[i] = ltr }
+  end
+
+  def game_ended?
+    master_win? || guesser_win?
+  end
+
+  def guesser_win?
+    !@guess.include?('_')
+  end
+
+  def master_win?
+    @word_guesser.lifes.length.zero?
+  end
+
+  def print_win_msg
+    print_board
+    if guesser_win?
+      puts 'You guessed right! You win!'
+    else
+      puts "Too bad, you didn't guess the correct word!"
+      @word_master.reveal_secret_word
+    end
   end
 end
 
@@ -57,6 +84,10 @@ class WordMaster
 
   def get_ltr_index(ltr)
     @word.split('').map.with_index { |w_ltr, i| i if w_ltr == ltr }.compact
+  end
+
+  def reveal_secret_word
+    puts "The secret word was: #{@word}"
   end
 
   private
