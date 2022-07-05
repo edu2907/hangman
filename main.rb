@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Responsible for the logic of the game
 class Game
   attr_reader :wrong_letters, :guess
@@ -19,11 +21,11 @@ class Game
   def loop_rounds
     until game_ended?
       print_board
-      guess_letter = @word_guesser.type_letter
-      if @word_master.correct_letter?(guess_letter)
-        insert_ltr_in_guess(guess_letter)
+      guessed_letter = @word_guesser.guess_letter
+      if @word_master.correct_letter?(guessed_letter)
+        insert_ltr_in_guess(guessed_letter)
       else
-        @wrong_letters.push(guess_letter)
+        @wrong_letters.push(guessed_letter)
         @word_guesser.lifes.pop
       end
     end
@@ -112,32 +114,40 @@ class WordGuesser
   attr_accessor :lifes
 
   def initialize(game)
-    @lifes = ['♥', '♥', '♥', '♥', '♥', '♥']
+    @lifes = Array.new(6) { '♥' }
     @game = game
   end
 
+  def guess_letter
+    letter = type_letter
+    check_letter(letter)
+  end
+
+  private
+
   def type_letter
     print 'Type the correct letter: '
-    letter = gets.chomp.downcase
-    if ltr_already_typed?(letter)
+    gets.chomp.downcase
+  end
+
+  def check_letter(ltr)
+    if ltr_already_typed?(ltr)
       puts 'You already typed that letter!'
       type_letter
-    elsif valid_letter?(letter)
-      letter
+    elsif valid_letter?(ltr)
+      ltr
     else
       puts 'Invalid letter! Be sure to type only ONE letter between a-z.'
       type_letter
     end
   end
 
-  private
-
   def valid_letter?(ltr)
     ltr.length == 1 && ltr.match?(/[a-z]/)
   end
 
   def ltr_already_typed?(ltr)
-    typed_ltrs = @game.wrong_letters + @game.guess.reject { |ltr| ltr == '_'}
+    typed_ltrs = @game.wrong_letters + @game.guess.reject { |g_ltr| g_ltr == '_' }
     typed_ltrs.include?(ltr)
   end
 end
