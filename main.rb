@@ -9,6 +9,7 @@ class Game
 
   def run
     print_board
+    guess_letter = @word_guesser.type_letter
   end
 
   private
@@ -58,6 +59,23 @@ class WordGuesser
 
   def initialize
     @lifes = ['♥', '♥', '♥', '♥', '♥', '♥']
+  end
+
+  def type_letter
+    print 'Type the correct letter: '
+    letter = gets.chomp.downcase
+    if valid_letter?(letter)
+      letter
+    else
+      puts 'Invalid letter! Be sure to type only ONE letter between a-z.'
+      type_letter
+    end
+  end
+
+  private
+
+  def valid_letter?(ltr)
+    ltr.length == 1 && ltr.match?(/[a-z]/)
   end
 end
 
