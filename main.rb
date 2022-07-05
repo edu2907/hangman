@@ -3,13 +3,21 @@ class Game
   def initialize
     @word_master = WordMaster.new
     @word_guesser = WordGuesser.new
-    @wrong_letters = Array.new(6) { ' ' }
+    @wrong_letters = []
     @guess = Array.new(@word_master.word_length) { '_' }
   end
 
   def run
-    print_board
-    guess_letter = @word_guesser.type_letter
+    while true
+      print_board
+      guess_letter = @word_guesser.type_letter
+      if @word_master.correct_letter?(guess_letter)
+        insert_ltr_in_guess(guess_letter)
+      else
+        @wrong_letters.push(guess_letter)
+        @word_guesser.lifes.pop
+      end
+    end
   end
 
   private
@@ -18,13 +26,18 @@ class Game
     puts <<~HEREDOC
        =================================
       ||                               ||
-      || Lifes: #{@word_guesser.lifes.join(' ')}            ||
-      || Wrong Letters: #{@wrong_letters.join(' ')}    ||
+      || Lifes: #{@word_guesser.lifes.join(' ').ljust(11)}            ||
+      || Wrong Letters: #{@wrong_letters.join(' ').ljust(11)}    ||
       ||                               ||
       || Word: #{@guess.join(' ').ljust(23)} ||
       ||                               ||
        =================================
     HEREDOC
+  end
+
+  def insert_ltr_in_guess(ltr)
+    index_list = @word_master.get_ltr_index(ltr)
+    index_list.each { |i| @guess[i] = ltr }
   end
 end
 
@@ -36,6 +49,14 @@ class WordMaster
 
   def word_length
     @word.length
+  end
+
+  def correct_letter?(ltr)
+    @word.include?(ltr)
+  end
+
+  def get_ltr_index(ltr)
+    @word.split('').map.with_index { |w_ltr, i| i if w_ltr == ltr }.compact
   end
 
   private
