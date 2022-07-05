@@ -245,6 +245,17 @@ class SaveHandler
   end
 end
 
+puts <<~HEREDOC
+ _    _
+| |  | |
+| |__| | __ _ _ __   __ _ _ __ ___   __ _ _ __
+|  __  |/ _` | '_ \\ / _` | '_ ` _ \\ / _` | '_ \\
+| |  | | (_| | | | | (_| | | | | | | (_| | | | |
+|_|  |_|\\__,_|_| |_|\\__, |_| |_| |_|\\__,_|_| |_|
+                     __/ |
+                    |___/
+HEREDOC
+
 if !Dir.exist?('saves') || Dir.glob('saves/*').empty?
   Game.new(nil, Array.new(6) { '♥' }, [], nil).run
 else
