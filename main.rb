@@ -1,8 +1,10 @@
 # Responsible for the logic of the game
 class Game
+  attr_reader :wrong_letters, :guess
+
   def initialize
     @word_master = WordMaster.new
-    @word_guesser = WordGuesser.new
+    @word_guesser = WordGuesser.new(self)
     @wrong_letters = []
     @guess = Array.new(@word_master.word_length) { '_' }
   end
@@ -109,14 +111,18 @@ end
 class WordGuesser
   attr_accessor :lifes
 
-  def initialize
+  def initialize(game)
     @lifes = ['♥', '♥', '♥', '♥', '♥', '♥']
+    @game = game
   end
 
   def type_letter
     print 'Type the correct letter: '
     letter = gets.chomp.downcase
-    if valid_letter?(letter)
+    if ltr_already_typed?(letter)
+      puts 'You already typed that letter!'
+      type_letter
+    elsif valid_letter?(letter)
       letter
     else
       puts 'Invalid letter! Be sure to type only ONE letter between a-z.'
@@ -128,6 +134,11 @@ class WordGuesser
 
   def valid_letter?(ltr)
     ltr.length == 1 && ltr.match?(/[a-z]/)
+  end
+
+  def ltr_already_typed?(ltr)
+    typed_ltrs = @game.wrong_letters + @game.guess.reject { |ltr| ltr == '_'}
+    typed_ltrs.include?(ltr)
   end
 end
 
