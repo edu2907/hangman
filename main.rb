@@ -89,16 +89,16 @@ class Game
   end
 
   def store_in_file(yaml)
-    Dir.mkdir('saves') unless Dir.exist?('saves')
-    file_number = Dir.glob('saves/*').length + 1
+    Dir.mkdir('.saves') unless Dir.exist?('.saves')
+    file_number = Dir.glob('.saves/*').length + 1
 
-    File.open("saves/savegame#{file_number}.yaml", 'w+') { |file| file.write yaml }
+    File.open(".saves/savegame#{file_number}.yaml", 'w+') { |file| file.write yaml }
   end
 
   def end_execution
     print 'Do you wanna close the game? (yes: type \'y\'/no: type ENTER): '
     option = gets.chomp
-    exit if option == 'yes'
+    exit if option == 'y'
   end
 end
 
@@ -217,7 +217,7 @@ class SaveHandler
       load_game
     else
       puts 'Invalid option! Try again'
-      SaveHandler.choose_option
+      start_game
     end
   end
 
@@ -228,7 +228,7 @@ class SaveHandler
   end
 
   def choose_files
-    files_list = Dir.glob('saves/*')
+    files_list = Dir.glob('.saves/*')
     return files_list[0] if files_list.length == 1
 
     files_list.each_with_index { |filename, i| puts "#{i + 1} - #{filename}" }
@@ -256,7 +256,7 @@ puts <<~HEREDOC
                     |___/
 HEREDOC
 
-if !Dir.exist?('saves') || Dir.glob('saves/*').empty?
+if !Dir.exist?('.saves') || Dir.glob('.saves/*').empty?
   Game.new(nil, Array.new(6) { '♥' }, [], nil).run
 else
   SaveHandler.new.start_game
